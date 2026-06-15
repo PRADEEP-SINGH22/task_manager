@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Task Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- SortableJS for drag and drop -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <!-- Custom Modal -->
+    <div id="custom-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h3 id="modal-title">Confirm</h3>
+            <p id="modal-body">Are you sure?</p>
+            <div class="modal-actions">
+                <button id="modal-cancel-btn" class="modal-btn secondary" type="button">Cancel</button>
+                <button id="modal-confirm-btn" class="modal-btn danger" type="button">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="app">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h2>Task Manager</h2>
+                <div style="display: flex; gap: 8px;">
+                    <button id="sidebar-toggle" class="desktop-only icon-btn" type="button" title="Hide Sidebar"><i data-lucide="panel-left-close"></i></button>
+                    <button id="mobile-menu-close" class="mobile-only icon-btn" type="button"><i data-lucide="x"></i></button>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <h3>Folders</h3>
+                    <ul id="folder-list">
+                        <!-- Folders injected here -->
+                    </ul>
+                    <button id="add-folder-btn" class="add-btn" type="button"><i data-lucide="plus"></i> New Folder</button>
+                </div>
+                <div class="nav-section">
+                    <h3>System</h3>
+                    <ul id="system-folders">
+                        <li class="folder-item" id="inbox-folder" data-id="inbox">
+                            <i data-lucide="inbox"></i> Inbox
+                        </li>
+                        <li class="folder-item completed-folder" data-id="completed">
+                            <i data-lucide="check-circle"></i> Completed
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main id="main-content" class="main-content">
+            <header class="main-header" style="flex-wrap: wrap; padding-top: 40px; padding-bottom: 24px;">
+                <div style="display:flex; align-items:center; gap:16px;">
+                    <button id="mobile-menu-open" class="mobile-only icon-btn" type="button"><i data-lucide="menu"></i></button>
+                    <button id="desktop-menu-open" class="desktop-only icon-btn" type="button" style="display:none;" title="Show Sidebar"><i data-lucide="panel-left-open"></i></button>
+                    <div style="display:flex; flex-direction:column; gap:4px;">
+                        <div style="display:flex; align-items:center; gap: 8px;">
+                            <h1 id="current-folder-title" style="font-size: 1.5rem; font-weight: 800; text-transform: capitalize; margin: 0;">Loading...</h1>
+                            <button id="header-rename-btn" class="icon-btn" title="Rename Folder" style="display:none;"><i data-lucide="pencil" style="width:16px; height:16px;"></i></button>
+                        </div>
+                        <span id="current-folder-stats" style="color: var(--text-secondary); font-size: 0.8rem; font-weight: 500;"></span>
+                    </div>
+                </div>
+                
+                <div style="display:flex; align-items:center; gap: 12px; margin-left: auto;">
+                    <div class="search-container" style="position: relative;">
+                        <i data-lucide="search" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: var(--text-secondary);"></i>
+                        <input type="text" id="task-search-input" placeholder="Search tasks..." style="padding-left: 32px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary); outline: none; width: 200px;">
+                    </div>
+                    <select id="task-sort-select" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-secondary); padding: 5px 8px; font-size: 0.85rem; outline: none; cursor:pointer;">
+                        <option value="custom">Custom Sort</option>
+                        <option value="due_date">Due Date</option>
+                        <option value="priority">Priority</option>
+                        <option value="alphabetical">Alphabetical</option>
+                    </select>
+                </div>
+            </header>
+
+            <div class="content-body">
+                <!-- Task Creation Form (Hidden in Completed folder) -->
+                <div id="task-creator" class="task-creator">
+                    <input type="text" id="new-task-title" placeholder="What needs to be done?" autocomplete="off">
+                    <div class="task-creator-options">
+                        <input type="text" id="new-task-desc" placeholder="Description (optional)" autocomplete="off">
+                        
+                        <select id="new-task-priority" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-secondary); padding: 4px 8px; font-size: 0.75rem; outline: none; cursor:pointer;">
+                            <option value="1">Low Priority</option>
+                            <option value="2">Med Priority</option>
+                            <option value="3">High Priority</option>
+                        </select>
+                        
+                        <input type="date" id="new-task-deadline" title="Deadline (optional)">
+                        <button id="add-task-btn" class="primary-btn" type="button">Add Task</button>
+                    </div>
+                </div>
+
+                <!-- Task Lists -->
+                <div class="task-lists-container">
+                    <!-- Deadline Tasks -->
+                    <div id="deadline-section" class="task-section" style="display: none;">
+                        <h3 class="section-title">Upcoming Deadlines</h3>
+                        <div id="deadline-task-list" class="task-list"></div>
+                    </div>
+
+                    <!-- No Deadline Tasks -->
+                    <div id="nodeline-section" class="task-section">
+                        <h3 class="section-title">Tasks</h3>
+                        <div id="task-list" class="task-list sortable-list">
+                            <!-- Tasks injected here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>

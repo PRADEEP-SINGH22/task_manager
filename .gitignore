@@ -1,0 +1,24 @@
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Database
+tasks.db
+backend/tasks.db
+*.sqlite3
+
+# Logs
+*.log
+
+# OS generated
+.DS_Store
+Thumbs.db
