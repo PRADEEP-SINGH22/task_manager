@@ -10,6 +10,6 @@ services:
           name: task-manager-db
           property: connectionString
 
-  - type: pgo
-    name: task-manager-db
+databases:
+  - name: task-manager-db
     plan: free
